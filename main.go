@@ -3,12 +3,12 @@ package main
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"math/rand"
 	"os"
 	"os/exec"
 	"time"
+	"syscall"
 )
 
 
@@ -55,29 +55,22 @@ func main() {
 	origin.Close()
 
 	cmd := exec.Command("bash", os.Args[1])
-	stderr, err := cmd.StderrPipe()
-	stdout, err := cmd.StdoutPipe()
-	if err != nil{
-		log.Fatal(err)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.SysProcAttr = &syscall.SysProcAttr{
+		Cloneflags:  syscall.CLONE_NEWUTS,
 	}
+
 	err = cmd.Start()
 	if err != nil{
 		log.Fatal(err)
 	}
 
-	stderrRead, err := ioutil.ReadAll(stderr)
-	if err != nil{
-		log.Fatal(err)
-	}
-	stdoutRead, err := ioutil.ReadAll(stdout)
-	if err != nil{
-		log.Fatal(err)
-	}
 	if err := cmd.Wait(); err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("\n%s\n",stderrRead)
-	fmt.Printf("\n%s\n",stdoutRead)
+	fmt.Printf("\ndone\n")
 
 }
 
